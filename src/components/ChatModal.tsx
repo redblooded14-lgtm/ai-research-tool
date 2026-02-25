@@ -16,10 +16,28 @@ function generateId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+const STORAGE_KEY = "research-chat-messages";
+
+function loadMessages(): ChatMessage[] {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+    }
+  } catch {}
+  return [];
+}
+
 const ChatModal: React.FC<ChatModalProps> = ({ open, onClose }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(loadMessages);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId] = useState(() => generateId());
+
+  // Persist messages to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+  }, [messages]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastRequestRef = useRef<number>(0);
 
