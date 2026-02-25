@@ -11,14 +11,28 @@ const HighlightedText: React.FC<HighlightedTextProps> = ({ text, highlights }) =
     return <span className="whitespace-pre-wrap">{text}</span>;
   }
 
-  // Sort highlights by startIndex
-  const sorted = [...highlights]
-    .filter(h => h.startIndex >= 0 && h.endIndex <= text.length && h.startIndex < h.endIndex)
+  // Validate and correct highlight positions by matching term against actual text
+  const corrected = highlights
+    .map(h => {
+      // Check if the text at the given offsets matches the term
+      const slice = text.slice(h.startIndex, h.endIndex);
+      if (slice === h.term) {
+        return h;
+      }
+      // Try to find the correct position of the term in the text
+      const idx = text.indexOf(h.term);
+      if (idx !== -1) {
+        return { ...h, startIndex: idx, endIndex: idx + h.term.length };
+      }
+      // Term not found at all, skip this highlight
+      return null;
+    })
+    .filter((h): h is Highlight => h !== null)
     .sort((a, b) => a.startIndex - b.startIndex);
 
   // Remove overlapping highlights
   const noOverlap: Highlight[] = [];
-  for (const h of sorted) {
+  for (const h of corrected) {
     const last = noOverlap[noOverlap.length - 1];
     if (!last || h.startIndex >= last.endIndex) {
       noOverlap.push(h);
