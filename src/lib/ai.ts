@@ -14,7 +14,7 @@ async function fetchWithRetry(
 ): Promise<AIResponse> {
   try {
     const { data, error } = await supabase.functions.invoke("research", {
-      body: { messages },
+      body: { "" },
     });
 
     if (error) {
