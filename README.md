@@ -132,14 +132,7 @@ See `.env.example` for required variables:
 
 ---
 
-## Deployment
 
-The app is deployed via Lovable's built-in publishing. To deploy your own instance:
-
-1. Open the project in [Lovable](https://lovable.dev)
-2. Click **Share → Publish**
-
-For custom domains, go to **Project → Settings → Domains → Connect Domain**.
 
 ---
 
