@@ -1,73 +1,148 @@
-# Welcome to your Lovable project
+# ResearchAI — AI-Powered Research Assistant
 
-## Project info
+A conversational research assistant that delivers structured, highlighted answers with follow-up suggestions, built with **Lovable** and powered by **Google Gemini 3 Flash**.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**Live Demo:** [https://deep-seek-assist.lovable.app](https://deep-seek-assist.lovable.app)
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **Conversational AI Research** — Ask any question and receive detailed, structured answers in a chat interface.
+- **Smart Highlights** — Key entities (people, organizations), numbers (statistics, dates), and technical terms are automatically identified and visually highlighted in responses.
+- **Follow-up Suggestions** — The AI generates 2–4 contextual follow-up questions after each answer to help deepen research.
+- **Export Options** — Copy responses to clipboard, download the full conversation as a `.txt` file, or export as a styled PDF with highlights preserved.
+- **Session Persistence** — Chat history is saved to `sessionStorage` so conversations survive page refreshes within a session.
+- **Error Handling & Retries** — Transient failures (rate limits, timeouts, 502/503 errors) are automatically retried with exponential backoff (up to 3 attempts).
+- **Responsive Design** — Fully functional on desktop and mobile with a modal-based chat interface.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## AI Model: Why Google Gemini 3 Flash?
 
-**Use your preferred IDE**
+### The Platform
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+This app was built with **Lovable**, an AI-powered development platform. Lovable's own editor is powered by a mix of models including Google Gemini and OpenAI GPT-5 variants, which are continuously refined as new models are released.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### The App's AI Model
 
-Follow these steps:
+For the app's research function, we chose **Google Gemini 3 Flash** (`google/gemini-3-flash-preview`). Here's why:
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+| Factor | Gemini 3 Flash | Alternatives Considered |
+|--------|---------------|------------------------|
+| **Speed** | Very fast response times — ideal for a conversational research tool where users expect near-instant answers | GPT-5 / Gemini Pro are more powerful but noticeably slower |
+| **Cost** | Low cost per request — sustainable for a demo/portfolio app without heavy usage restrictions | Pro-tier models cost significantly more per token |
+| **Quality** | Strong reasoning and structured output — reliably returns well-formed JSON with highlights and follow-ups | Nano/Lite models are cheaper but struggle with structured JSON output |
+| **Structured Output** | Excellent at following JSON schema instructions, which is critical for the highlight and follow-up system | Some models require more prompt engineering to produce consistent JSON |
+
+**In short:** Gemini 3 Flash sits in the sweet spot — fast enough for real-time chat, smart enough for structured research output, and affordable enough for sustained use.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React 18, TypeScript, Vite |
+| **Styling** | Tailwind CSS, shadcn/ui components |
+| **Backend** | Lovable Cloud (Supabase Edge Functions) |
+| **AI Model** | Google Gemini 3 Flash via Lovable AI Gateway |
+| **Export** | jsPDF (PDF), html2canvas (screenshots), Clipboard API |
+| **State** | React hooks, sessionStorage for chat persistence |
+
+---
+
+## Project Structure
+
+```
+src/
+├── components/
+│   ├── ChatModal.tsx          # Main chat modal with message handling
+│   ├── MessageBubble.tsx      # Individual message display with highlights
+│   ├── HighlightedText.tsx    # Text rendering with color-coded highlights
+│   ├── InputBar.tsx           # Chat input with validation
+│   ├── ExportActions.tsx      # Copy / TXT / PDF export buttons
+│   ├── LoadingSkeleton.tsx    # Loading state animation
+│   └── ui/                    # shadcn/ui component library
+├── lib/
+│   └── ai.ts                  # AI client with retry logic
+├── types/
+│   └── chat.ts                # TypeScript interfaces (ChatMessage, AIResponse, Highlight)
+├── pages/
+│   └── Index.tsx              # Landing page with hero section
+└── integrations/
+    └── supabase/              # Auto-generated Supabase client
+
+supabase/
+└── functions/
+    └── research/
+        └── index.ts           # Edge function: proxies AI requests with error handling
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ and npm (or bun)
+
+### Local Installation
+
+```bash
+# 1. Clone the repository
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# 2. Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 3. Set up environment variables
+cp .env.example .env
+# Fill in your Supabase project credentials in .env
+
+# 4. Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:5173`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Environment Variables
 
-**Use GitHub Codespaces**
+See `.env.example` for required variables:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Variable | Description |
+|----------|-------------|
+| `VITE_SUPABASE_PROJECT_ID` | Your Supabase project ID |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Your Supabase anonymous/public key |
+| `VITE_SUPABASE_URL` | Your Supabase project URL |
 
-## What technologies are used for this project?
+> **Note:** The AI functionality requires the Lovable AI Gateway (`LOVABLE_API_KEY`), which is configured as a server-side secret in the edge function environment — it is **not** exposed in the frontend `.env` file.
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## How It Works
 
-## How can I deploy this project?
+1. **User sends a question** → InputBar validates (non-empty, trimmed) and passes to ChatModal
+2. **ChatModal builds context** → Includes full conversation history for multi-turn awareness
+3. **Edge function proxies the request** → Adds system prompt instructing Gemini to return structured JSON
+4. **Gemini responds with JSON** → Contains `text`, `highlights` (with character offsets & categories), and `followups`
+5. **Frontend renders the response** → HighlightedText color-codes entities/numbers/terms; follow-up chips appear below
+6. **User can export** → Full conversation exportable as clipboard text, `.txt` file, or styled PDF
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+## Deployment
 
-Yes, you can!
+The app is deployed via Lovable's built-in publishing. To deploy your own instance:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+1. Open the project in [Lovable](https://lovable.dev)
+2. Click **Share → Publish**
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+For custom domains, go to **Project → Settings → Domains → Connect Domain**.
+
+---
+
+## License
+
+This project was built as part of a submission. All rights reserved.
